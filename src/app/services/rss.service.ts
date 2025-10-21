@@ -34,7 +34,7 @@ export class RSSService {
         id: 'spiegel',
         name: 'Der Spiegel',
         url: 'https://www.spiegel.de',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 5
       },
       category: NewsCategory.POLITICS,
@@ -47,7 +47,7 @@ export class RSSService {
         id: 'faz',
         name: 'Frankfurter Allgemeine Zeitung',
         url: 'https://www.faz.net',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 5
       },
       category: NewsCategory.POLITICS,
@@ -60,7 +60,7 @@ export class RSSService {
         id: 'zeit',
         name: 'Die Zeit',
         url: 'https://www.zeit.de',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 5
       },
       category: NewsCategory.POLITICS,
@@ -73,7 +73,7 @@ export class RSSService {
         id: 'tagesschau',
         name: 'Tagesschau',
         url: 'https://www.tagesschau.de',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 5
       },
       category: NewsCategory.POLITICS,
@@ -86,7 +86,7 @@ export class RSSService {
         id: 'handelsblatt',
         name: 'Handelsblatt',
         url: 'https://www.handelsblatt.com',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 5
       },
       category: NewsCategory.BUSINESS,
@@ -99,7 +99,7 @@ export class RSSService {
         id: 'heise',
         name: 'Heise Online',
         url: 'https://www.heise.de',
-        logoUrl: '/assets/icons/news-placeholder.svg',
+        logoUrl: 'assets/icons/news-placeholder.svg',
         reliability: 4
       },
       category: NewsCategory.TECHNOLOGY,
@@ -734,7 +734,7 @@ export class RSSService {
       content: template.content,
       contentTranslated: template.contentTranslated,
       summary: template.summary,
-      imageUrl: `/assets/icons/news-placeholder.svg`,
+      imageUrl: `assets/icons/news-placeholder.svg`,
       source: source,
       category: template.category,
       publishedAt: new Date(Date.now() - Math.random() * 86400000), // Random time in last 24h

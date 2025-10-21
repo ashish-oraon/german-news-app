@@ -24,10 +24,10 @@ import { RSSService } from '../services/rss.service';
       <div class="card-header">
         <div class="source-info">
           <img
-            [src]="article.source.logoUrl || '/assets/icons/news-placeholder.svg'"
+            [src]="article.source.logoUrl || 'assets/icons/news-placeholder.svg'"
             [alt]="article.source.name"
             class="source-logo"
-            onerror="this.src='/assets/icons/news-placeholder.svg'"
+            onerror="this.src='assets/icons/news-placeholder.svg'"
           >
           <span class="source-name">{{ article.source.name }}</span>
           <span class="publish-time">{{ getTimeAgo() }}</span>

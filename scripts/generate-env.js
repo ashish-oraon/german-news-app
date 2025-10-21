@@ -25,26 +25,26 @@ if (!deeplApiKey) {
 // Generate production environment file with actual values
 const environmentContent = `export const environment = {
   production: true,
-  
+
   // 🔑 API Configuration - Injected during build from GitHub Secrets
   rss2JsonApiKey: '${rss2JsonApiKey}',
   deeplApiKey: '${deeplApiKey}',
-  
+
   // 🌐 API URLs
   deeplApiUrl: 'https://api-free.deepl.com/v2/translate',
   rss2JsonBaseUrl: 'https://api.rss2json.com/v1/api.json',
-  
+
   // 🔒 Security Configuration
   enableSecurityHeaders: true,
   allowedOrigins: [
     'https://*.github.io',
     'https://github.com'
   ],
-  
+
   // 🎛️ Feature Flags
   enableMockTranslations: true,  // Allow fallback translations in production
   enableAnalytics: false,       // Privacy-focused - no tracking
-  
+
   // ⚡ Cache Configuration
   cacheTimeout: 15 * 60 * 1000,          // 15 minutes
   translationCacheTimeout: 60 * 60 * 1000 // 1 hour

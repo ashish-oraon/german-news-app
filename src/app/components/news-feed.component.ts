@@ -25,7 +25,7 @@ import { ApiStatusComponent } from './api-status.component';
   template: `
     <div class="news-feed-container">
       <!-- API Status Card -->
-      <app-api-status></app-api-status>
+      <app-api-status (newsRefreshed)="refreshNews()"></app-api-status>
 
       <div class="news-feed" #newsFeed>
         <!-- Loading spinner for initial load -->

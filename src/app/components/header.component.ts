@@ -9,7 +9,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { NewsCategory } from '../models/news.interface';
-import { TranslationStatusComponent } from './translation-status.component';
 
 @Component({
   selector: 'app-header',
@@ -23,8 +22,7 @@ import { TranslationStatusComponent } from './translation-status.component';
     MatChipsModule,
     MatInputModule,
     MatFormFieldModule,
-    FormsModule,
-    TranslationStatusComponent
+    FormsModule
   ],
   template: `
     <mat-toolbar class="header-toolbar" color="primary">
@@ -91,9 +89,6 @@ import { TranslationStatusComponent } from './translation-status.component';
         </button>
       </div>
     </mat-toolbar>
-
-    <!-- Translation Status -->
-    <app-translation-status></app-translation-status>
 
     <!-- Settings Menu -->
     <mat-menu #settingsMenu="matMenu">

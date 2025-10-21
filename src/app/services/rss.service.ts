@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, forkJoin, of } from 'rxjs';
+import { Observable, forkJoin, of, from } from 'rxjs';
 import { map, catchError, switchMap, delay } from 'rxjs/operators';
 import { NewsArticle, NewsCategory, NewsSource } from '../models/news.interface';
 import { TranslationService } from './translation.service';
@@ -234,10 +234,8 @@ export class RSSService {
           console.log(`🎉 Successfully loaded ${realArticlesCount} fresh German news articles!`);
         }
 
-        // Sort by publication date (newest first)
-        return allArticles.sort((a, b) =>
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        );
+        // Sort with translated articles first, then by publication date
+        return this.sortArticlesWithTranslatedFirst(allArticles);
       }),
       // Auto-translate articles after fetching
       switchMap(articles => this.translateArticles(articles)),
@@ -421,10 +419,71 @@ export class RSSService {
   }
 
   /**
-   * Translate multiple articles
+   * Translate a single article on demand - PUBLIC METHOD
+   * Supports both initial translation and retranslation
+   */
+  translateArticleOnDemand(article: NewsArticle): Observable<NewsArticle> {
+    const isRetranslation = article.titleTranslated && article.contentTranslated;
+    console.log(`🔄 On-demand ${isRetranslation ? 'retranslation' : 'translation'}: "${article.title.substring(0, 50)}..."`);
+
+    // Check if translation service is configured
+    if (!this.translationService.isConfigured()) {
+      console.log('⚠️ Translation service not configured');
+      return of(article);
+    }
+
+    return this.translateSingleArticle(article).pipe(
+      map(translatedArticle => {
+        // Update the cache with the newly translated article
+        this.updateSingleArticleInCache(translatedArticle);
+        console.log(`✅ On-demand ${isRetranslation ? 'retranslation' : 'translation'} complete: "${translatedArticle.titleTranslated?.substring(0, 50)}..."`);
+        return translatedArticle;
+      }),
+      catchError(error => {
+        console.error('❌ On-demand translation failed:', error);
+        return of(article);
+      })
+    );
+  }
+
+  /**
+   * Update a single translated article in the IndexedDB cache
+   */
+  private updateSingleArticleInCache(article: NewsArticle): void {
+    // Get all cached articles for this source
+    this.indexedDBCache.getCachedArticles(article.source.id).subscribe({
+      next: (cachedArticles) => {
+        // Find and update the specific article
+        const updatedArticles = cachedArticles.map(cached =>
+          cached.id === article.id ? article : cached
+        );
+
+        // If article wasn't found in cache, add it
+        if (!cachedArticles.some(cached => cached.id === article.id)) {
+          updatedArticles.push(article);
+        }
+
+        // Re-cache the updated articles
+        this.indexedDBCache.cacheArticles(article.source.id, updatedArticles).subscribe({
+          next: () => {
+            console.log(`💾 Updated translated article in cache: ${article.source.id}`);
+          },
+          error: (error) => {
+            console.error('❌ Failed to update article in cache:', error);
+          }
+        });
+      },
+      error: (error) => {
+        console.error('❌ Failed to get cached articles:', error);
+      }
+    });
+  }
+
+  /**
+   * Translate multiple articles - only first 15 for initial load
    */
   private translateArticles(articles: NewsArticle[]): Observable<NewsArticle[]> {
-    console.log(`🔄 Starting translation for ${articles.length} articles...`);
+    console.log(`🔄 Starting translation for first 15 of ${articles.length} articles...`);
 
     if (articles.length === 0) {
       return of([]);
@@ -436,9 +495,9 @@ export class RSSService {
       return of(articles);
     }
 
-    // Translate more articles - increased from 5 to 15 per batch
-    const TRANSLATION_BATCH_SIZE = 15;
-    const articlesToTranslate = articles.slice(0, TRANSLATION_BATCH_SIZE);
+    // Translate only first 15 articles for faster initial load
+    const INITIAL_TRANSLATION_COUNT = 15;
+    const articlesToTranslate = articles.slice(0, INITIAL_TRANSLATION_COUNT);
     console.log(`🇩🇪➡️🇺🇸 Translating ${articlesToTranslate.length} German articles to English...`);
 
     const translationRequests = articlesToTranslate.map(article =>
@@ -450,12 +509,16 @@ export class RSSService {
         const successfulTranslations = translatedArticles.filter(a => a.titleTranslated);
         console.log(`✅ Successfully translated ${successfulTranslations.length} German articles to English`);
 
-        const finalArticles = [...translatedArticles, ...articles.slice(TRANSLATION_BATCH_SIZE)];
+        // Combine translated articles with remaining untranslated ones
+        const finalArticles = [...translatedArticles, ...articles.slice(INITIAL_TRANSLATION_COUNT)];
+
+        // Sort with translated articles first
+        const sortedArticles = this.sortArticlesWithTranslatedFirst(finalArticles);
 
         // Cache translated articles by source
-        this.cacheTranslatedArticlesBySource(finalArticles);
+        this.cacheTranslatedArticlesBySource(sortedArticles);
 
-        return finalArticles;
+        return sortedArticles;
       }),
       catchError(error => {
         console.error('❌ Translation failed, returning original articles:', error);
@@ -546,10 +609,58 @@ export class RSSService {
   }
 
   /**
+   * Sort articles with translated articles first, then by publication date
+   */
+  private sortArticlesWithTranslatedFirst(articles: NewsArticle[]): NewsArticle[] {
+    return articles.sort((a, b) => {
+      // Check if articles are translated
+      const aTranslated = !!(a.titleTranslated && a.contentTranslated);
+      const bTranslated = !!(b.titleTranslated && b.contentTranslated);
+
+      // If translation status is different, prioritize translated articles
+      if (aTranslated !== bTranslated) {
+        return bTranslated ? 1 : -1; // Translated articles come first
+      }
+
+      // If both have same translation status, sort by publication date (newest first)
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
+  }
+
+  /**
    * Get all available RSS sources
    */
   getAllRSSSources(): RSSFeed[] {
     return this.rssSources;
+  }
+
+  /**
+   * Clear all cache and fetch fresh news
+   */
+  refreshAllNews(): Observable<NewsArticle[]> {
+    console.log('🔄 Refreshing news: Clearing cache and fetching fresh content...');
+
+    return this.indexedDBCache.clearCache().pipe(
+      switchMap(() => {
+        // Clear in-memory cache as well
+        this.cacheService.clearCache();
+        console.log('🗑️ All caches cleared, fetching fresh news...');
+
+        // Fetch fresh news (bypassing cache)
+        return this.fetchFreshNews();
+      }),
+      map(articles => {
+        console.log(`✅ News refreshed successfully: ${articles.length} fresh articles loaded`);
+        return articles;
+      }),
+      catchError(error => {
+        console.error('❌ Failed to refresh news:', error);
+        // Fallback to any remaining cached articles
+        return this.indexedDBCache.getAllCachedArticles().pipe(
+          catchError(() => of([]))
+        );
+      })
+    );
   }
 
   /**

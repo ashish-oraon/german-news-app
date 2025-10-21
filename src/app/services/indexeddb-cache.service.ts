@@ -152,10 +152,8 @@ export class IndexedDBCacheService {
           }
         });
 
-        // Sort by publication date (newest first)
-        const sortedArticles = allArticles.sort((a, b) =>
-          new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-        );
+        // Sort with translated articles first, then by publication date
+        const sortedArticles = this.sortArticlesWithTranslatedFirst(allArticles);
 
         console.log(`📦 IndexedDB: Retrieved ${sortedArticles.length} cached articles from ${entries.length} sources`);
         return sortedArticles;
@@ -424,5 +422,24 @@ export class IndexedDBCacheService {
     if (totalSize < 1024) return `${totalSize} B`;
     if (totalSize < 1024 * 1024) return `${Math.round(totalSize / 1024)} KB`;
     return `${Math.round(totalSize / (1024 * 1024))} MB`;
+  }
+
+  /**
+   * Sort articles with translated articles first, then by publication date
+   */
+  private sortArticlesWithTranslatedFirst(articles: NewsArticle[]): NewsArticle[] {
+    return articles.sort((a, b) => {
+      // Check if articles are translated
+      const aTranslated = !!(a.titleTranslated && a.contentTranslated);
+      const bTranslated = !!(b.titleTranslated && b.contentTranslated);
+
+      // If translation status is different, prioritize translated articles
+      if (aTranslated !== bTranslated) {
+        return bTranslated ? 1 : -1; // Translated articles come first
+      }
+
+      // If both have same translation status, sort by publication date (newest first)
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
   }
 }

@@ -4,7 +4,9 @@ import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { NewsArticle } from '../models/news.interface';
+import { RSSService } from '../services/rss.service';
 
 @Component({
   selector: 'app-news-card',
@@ -14,7 +16,8 @@ import { NewsArticle } from '../models/news.interface';
     MatCardModule,
     MatButtonModule,
     MatIconModule,
-    MatChipsModule
+    MatChipsModule,
+    MatProgressSpinnerModule
   ],
   template: `
     <mat-card class="news-card" [class.expanded]="isExpanded">
@@ -93,6 +96,17 @@ import { NewsArticle } from '../models/news.interface';
         >
           <mat-icon>{{ isExpanded ? 'expand_less' : 'expand_more' }}</mat-icon>
           {{ isExpanded ? 'Less' : 'More' }}
+        </button>
+
+        <button
+          mat-button
+          (click)="translateArticle()"
+          [class]="getTranslateButtonClass()"
+          [disabled]="isTranslating"
+        >
+          <mat-spinner *ngIf="isTranslating" diameter="16"></mat-spinner>
+          <mat-icon *ngIf="!isTranslating">translate</mat-icon>
+          {{ getTranslateButtonText() }}
         </button>
 
         <button
@@ -358,6 +372,35 @@ import { NewsArticle } from '../models/news.interface';
       color: #1976d2;
     }
 
+    .translate-btn {
+      color: #4caf50;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: color 0.3s ease;
+    }
+
+    .translate-btn.new {
+      color: #4caf50; /* Green for new translation */
+    }
+
+    .translate-btn.complete {
+      color: #ff9800; /* Orange for completing partial translation */
+    }
+
+    .translate-btn.retranslate {
+      color: #2196f3; /* Blue for retranslation */
+    }
+
+    .translate-btn[disabled] {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .translate-btn mat-spinner {
+      margin-right: 4px;
+    }
+
     .bookmarked {
       color: #ff9800 !important;
     }
@@ -417,14 +460,43 @@ export class NewsCardComponent {
   isBookmarked = false;
   showTranslationBadge = true;
   showOriginalText = false;
+  isTranslating = false;
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private rssService: RSSService
   ) {}
 
   toggleExpanded(): void {
     this.isExpanded = !this.isExpanded;
+  }
+
+  translateArticle(): void {
+    if (this.isTranslating) {
+      return;
+    }
+
+    this.isTranslating = true;
+    const isRetranslation = this.article.titleTranslated && this.article.contentTranslated;
+    console.log(isRetranslation ? '🔄 User requested retranslation for:' : '🔄 User requested translation for:',
+                this.article.title.substring(0, 50) + '...');
+
+    this.rssService.translateArticleOnDemand(this.article).subscribe({
+      next: (translatedArticle) => {
+        // Update the article with translations
+        this.article.titleTranslated = translatedArticle.titleTranslated;
+        this.article.contentTranslated = translatedArticle.contentTranslated;
+        this.article.summary = translatedArticle.summary;
+
+        this.isTranslating = false;
+        console.log('✅ Translation completed successfully');
+      },
+      error: (error) => {
+        console.error('❌ Translation failed:', error);
+        this.isTranslating = false;
+      }
+    });
   }
 
   openOriginal(): void {
@@ -500,6 +572,32 @@ export class NewsCardComponent {
       return 'Content translated from German';
     }
     return 'Original German text';
+  }
+
+  getTranslateButtonText(): string {
+    if (this.isTranslating) {
+      return 'Translating...';
+    }
+
+    if (this.article.titleTranslated && this.article.contentTranslated) {
+      return 'Retranslate';
+    } else if (this.article.titleTranslated || this.article.contentTranslated) {
+      return 'Complete Translation';
+    }
+
+    return 'Translate';
+  }
+
+  getTranslateButtonClass(): string {
+    let baseClasses = 'translate-btn';
+
+    if (this.article.titleTranslated && this.article.contentTranslated) {
+      return `${baseClasses} retranslate`;
+    } else if (this.article.titleTranslated || this.article.contentTranslated) {
+      return `${baseClasses} complete`;
+    }
+
+    return `${baseClasses} new`;
   }
 
   toggleOriginalText(): void {

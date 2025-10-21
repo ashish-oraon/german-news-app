@@ -94,10 +94,8 @@ export class RssCacheService {
       }
     }
 
-    // Sort by publication date
-    return allArticles.sort((a, b) =>
-      new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-    );
+    // Sort with translated articles first, then by publication date
+    return this.sortArticlesWithTranslatedFirst(allArticles);
   }
 
   /**
@@ -177,5 +175,24 @@ export class RssCacheService {
     const timeSinceLastFetch = Date.now() - this.lastFetchTime;
     const remaining = this.MIN_FETCH_INTERVAL - timeSinceLastFetch;
     return Math.max(0, remaining);
+  }
+
+  /**
+   * Sort articles with translated articles first, then by publication date
+   */
+  private sortArticlesWithTranslatedFirst(articles: NewsArticle[]): NewsArticle[] {
+    return articles.sort((a, b) => {
+      // Check if articles are translated
+      const aTranslated = !!(a.titleTranslated && a.contentTranslated);
+      const bTranslated = !!(b.titleTranslated && b.contentTranslated);
+
+      // If translation status is different, prioritize translated articles
+      if (aTranslated !== bTranslated) {
+        return bTranslated ? 1 : -1; // Translated articles come first
+      }
+
+      // If both have same translation status, sort by publication date (newest first)
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    });
   }
 }

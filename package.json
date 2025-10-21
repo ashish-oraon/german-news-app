@@ -7,10 +7,12 @@
     "build": "ng build",
     "build:prod": "ng build --configuration production",
     "build:github": "ng build --configuration production --base-href '/german-news-app/'",
+    "build:prod:with-env": "node scripts/generate-env.js && npm run build:prod",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
     "lint": "ng lint",
+    "generate-env": "node scripts/generate-env.js",
     "serve:ssr:german-news-app": "node dist/german-news-app/server/server.mjs",
     "deploy:github": "npm run build:github && npx angular-cli-ghpages --dir=dist/german-news-app/browser"
   },

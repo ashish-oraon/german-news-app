@@ -5,9 +5,14 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "ng build --configuration production",
+    "build:github": "ng build --configuration production --base-href '/german-news-app/'",
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
-    "serve:ssr:german-news-app": "node dist/german-news-app/server/server.mjs"
+    "test:ci": "ng test --watch=false --browsers=ChromeHeadless",
+    "lint": "ng lint",
+    "serve:ssr:german-news-app": "node dist/german-news-app/server/server.mjs",
+    "deploy:github": "npm run build:github && npx angular-cli-ghpages --dir=dist/german-news-app/browser"
   },
   "private": true,
   "dependencies": {

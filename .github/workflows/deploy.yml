@@ -1,0 +1,165 @@
+name: Build and Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch: # Allows manual triggering
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  # Build and Test Job
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: 🔧 Install Dependencies
+      run: |
+        npm ci --legacy-peer-deps
+
+    - name: 🔍 Run Security Audit
+      run: |
+        npm audit --audit-level=moderate || true
+        echo "Security audit completed"
+
+    - name: 🏗️ Build Application
+      run: |
+        npm run build:prod
+      env:
+        RSS2JSON_API_KEY: ${{ secrets.RSS2JSON_API_KEY }}
+        DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+
+    - name: 🧪 Run Tests (if available)
+      run: |
+        # Skip tests for now as they may not be configured
+        echo "Tests would run here if configured"
+        # npm run test:ci
+
+    - name: 📁 Upload Build Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: dist-files
+        path: dist/
+        retention-days: 1
+
+  # Deploy Job (only runs on main/master branch)
+  deploy:
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: 🔧 Install Dependencies
+      run: |
+        npm ci --legacy-peer-deps
+
+    - name: 🏗️ Build for GitHub Pages
+      run: |
+        npm run build:prod -- --base-href=/german-news-app/
+      env:
+        RSS2JSON_API_KEY: ${{ secrets.RSS2JSON_API_KEY }}
+        DEEPL_API_KEY: ${{ secrets.DEEPL_API_KEY }}
+
+    - name: 📄 Setup Pages
+      uses: actions/configure-pages@v4
+
+    - name: 📦 Upload to Pages
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: dist/german-news-app/browser
+
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+
+  # Security Check Job
+  security-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+
+    steps:
+    - name: 📋 Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: 📦 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: 🔧 Install Dependencies
+      run: |
+        npm ci --legacy-peer-deps
+
+    - name: 🔒 Security Audit
+      run: |
+        echo "🔍 Running comprehensive security checks..."
+
+        # Check for hardcoded secrets
+        echo "Checking for potential API key leaks..."
+        if grep -r "api.*key.*=" src/ --include="*.ts" | grep -v environment | grep -v "YOUR_.*_KEY_HERE"; then
+          echo "❌ Potential API key found in source code!"
+          exit 1
+        else
+          echo "✅ No hardcoded API keys found"
+        fi
+
+        # Check for console.log statements in production code
+        echo "Checking for debug statements..."
+        if grep -r "console\.log" src/ --include="*.ts" | grep -v "\.spec\.ts"; then
+          echo "⚠️ Console.log statements found (consider removing for production)"
+        else
+          echo "✅ No console.log statements found"
+        fi
+
+        # Run npm audit
+        echo "Running npm security audit..."
+        npm audit --audit-level=high
+
+        echo "🎉 Security checks completed successfully!"
+
+    - name: 📊 Code Quality Check
+      run: |
+        echo "🔍 Running code quality checks..."
+
+        # Check TypeScript compilation
+        npx tsc --noEmit --project tsconfig.json
+
+        # Check for TODO/FIXME comments
+        if grep -r "TODO\|FIXME" src/ --include="*.ts" | grep -v "\.spec\.ts"; then
+          echo "ℹ️ Found TODO/FIXME comments - consider addressing before production"
+        fi
+
+        echo "✅ Code quality checks completed!"

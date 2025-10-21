@@ -14,6 +14,37 @@ export function app(): express.Express {
 
   const commonEngine = new CommonEngine();
 
+  // Security Headers Middleware
+  server.use((req, res, next) => {
+    // Content Security Policy
+    res.setHeader('Content-Security-Policy',
+      "default-src 'self'; " +
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://api.allorigins.win; " +
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; " +
+      "font-src 'self' https://fonts.gstatic.com; " +
+      "img-src 'self' data: blob: https: http:; " +
+      "connect-src 'self' https://api.rss2json.com https://api-free.deepl.com https://api.mymemory.translated.net https://api.allorigins.win; " +
+      "frame-src 'none'; " +
+      "object-src 'none'; " +
+      "base-uri 'self'; " +
+      "form-action 'self';"
+    );
+
+    // Security Headers
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+
+    // HSTS (HTTP Strict Transport Security) - only for HTTPS
+    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+
+    next();
+  });
+
   server.set('view engine', 'html');
   server.set('views', browserDistFolder);
 

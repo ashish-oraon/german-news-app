@@ -40,3 +40,43 @@ testem.log
 # System files
 .DS_Store
 Thumbs.db
+
+# Security - Environment files with API keys
+/src/environments/environment.local.ts
+/src/environments/environment.*.local.ts
+.env
+.env.local
+.env.production
+.env.staging
+
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Build artifacts for GitHub Pages
+/docs
+
+# Temporary files
+.tmp/
+temp/
+
+# Editor files
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store?
+ehthumbs.db
+Icon?
+
+# Security sensitive files
+config/secrets.json
+*.key
+*.pem

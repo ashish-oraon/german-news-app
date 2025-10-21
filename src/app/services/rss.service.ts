@@ -6,6 +6,8 @@ import { NewsArticle, NewsCategory, NewsSource } from '../models/news.interface'
 import { TranslationService } from './translation.service';
 import { RssCacheService } from './rss-cache.service';
 import { IndexedDBCacheService } from './indexeddb-cache.service';
+import { InputSanitizerService } from './input-sanitizer.service';
+import { environment } from '../../environments/environment';
 
 export interface RSSFeed {
   url: string; // API endpoint URL (will be built with API key)
@@ -20,8 +22,8 @@ export interface RSSFeed {
 })
 export class RSSService {
   // RSS2JSON API Configuration
-  private readonly RSS2JSON_API_KEY = '8rbktxazq9pwkhrtxrg1nfobod3pqdbdvojlfmnq';
-  private readonly RSS2JSON_BASE_URL = 'https://api.rss2json.com/v1/api.json';
+  private readonly RSS2JSON_API_KEY = environment.rss2JsonApiKey;
+  private readonly RSS2JSON_BASE_URL = environment.rss2JsonBaseUrl;
 
   // German RSS feeds with authenticated RSS2JSON API
   private rssSources: RSSFeed[] = [
@@ -109,7 +111,8 @@ export class RSSService {
     private http: HttpClient,
     private translationService: TranslationService,
     private cacheService: RssCacheService,
-    private indexedDBCache: IndexedDBCacheService
+    private indexedDBCache: IndexedDBCacheService,
+    private sanitizer: InputSanitizerService
   ) {
     // Clear old cache that doesn't have translations
     this.clearOldUntranslatedCache();
@@ -316,24 +319,38 @@ export class RSSService {
    * Parse RSS2JSON proxy response
    */
   private parseRSS2JSONResponse(response: any, feed: RSSFeed): NewsArticle[] {
-    return response.items.slice(0, 15).map((item: any, index: number) => {
+    return response.items.slice(0, 15).map((item: any, index: number): NewsArticle | null => {
+      // Sanitize the raw RSS item data
+      const sanitizedItem = this.sanitizer.sanitizeNewsArticle(item);
+
+      // Additional validation
+      if (!this.sanitizer.isSafeContent(sanitizedItem.title) ||
+          !this.sanitizer.isSafeContent(sanitizedItem.content)) {
+        console.warn('🔒 Unsafe content detected and filtered:', sanitizedItem.title);
+        return null;
+      }
+
       const article: NewsArticle = {
         id: `${feed.source.id}-${Date.now()}-${index}`,
-        title: this.cleanText(item.title || 'Untitled'),
+        title: this.sanitizer.sanitizeRssContent(sanitizedItem.title || 'Untitled'),
         titleTranslated: undefined, // Will be filled by translation service
-        content: this.cleanText(item.description || item.content || ''),
+        content: this.sanitizer.sanitizeRssContent(sanitizedItem.description || sanitizedItem.content || ''),
         contentTranslated: undefined, // Will be filled by translation service
-        summary: this.generateSummary(item.description || item.content || ''),
-        imageUrl: this.extractImageUrl(item),
-        source: feed.source,
+        summary: this.generateSummary(sanitizedItem.description || sanitizedItem.content || ''),
+        imageUrl: this.sanitizer.sanitizeUrl(this.extractImageUrl(sanitizedItem) || ''),
+        source: {
+          ...feed.source,
+          url: this.sanitizer.sanitizeUrl(feed.source.url),
+          logoUrl: this.sanitizer.sanitizeUrl(feed.source.logoUrl || '')
+        },
         category: feed.category,
-        publishedAt: new Date(item.pubDate || item.published || Date.now()),
-        url: item.link || item.url || '#',
-        author: item.author || 'Unknown',
-        readTime: this.calculateReadTime(item.description || item.content || '')
+        publishedAt: new Date(sanitizedItem.pubDate || sanitizedItem.published || Date.now()),
+        url: this.sanitizer.sanitizeUrl(sanitizedItem.link || sanitizedItem.url || '#'),
+        author: this.sanitizer.sanitizeRssContent(sanitizedItem.author || 'Unknown'),
+        readTime: this.calculateReadTime(sanitizedItem.description || sanitizedItem.content || '')
       };
       return article;
-    });
+    }).filter((article: NewsArticle | null): article is NewsArticle => article !== null); // Remove any null articles that failed validation
   }
 
   /**

@@ -9,6 +9,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { FormsModule } from '@angular/forms';
 import { NewsCategory } from '../models/news.interface';
+import { InputSanitizerService } from '../services/input-sanitizer.service';
 
 @Component({
   selector: 'app-header',
@@ -220,37 +221,134 @@ import { NewsCategory } from '../models/news.interface';
     .mat-mdc-chip-listbox {
       display: flex;
       flex-wrap: nowrap;
-      gap: 8px;
+      gap: 12px;
       padding: 0;
+      align-items: center;
     }
 
     .mat-mdc-chip-option {
-      display: flex;
+      display: inline-flex;
       align-items: center;
-      gap: 4px;
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      background: transparent;
-      color: white;
-      transition: all 0.3s ease;
+      gap: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.85);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       white-space: nowrap;
-      font-size: 14px;
-      padding: 8px 12px;
+      font-size: 13px;
+      font-weight: 400;
+      padding: 10px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .mat-mdc-chip-option::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.6s ease;
     }
 
     .mat-mdc-chip-option:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px) scale(1.01);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    .mat-mdc-chip-option:hover::before {
+      left: 100%;
+    }
+
+    .mat-mdc-chip-option:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .mat-mdc-chip-option[aria-selected="true"] {
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border-color: rgba(255, 255, 255, 0.3);
+      font-weight: 500;
+      box-shadow: 0 2px 10px rgba(255, 255, 255, 0.15);
+    }
+
+    .mat-mdc-chip-option[aria-selected="true"] mat-icon {
+      color: white;
     }
 
     .mat-mdc-chip-option mat-icon {
-      font-size: 18px;
-      width: 18px;
-      height: 18px;
+      font-size: 16px;
+      width: 16px;
+      height: 16px;
+      color: inherit;
+      transition: transform 0.3s ease;
+    }
+
+    .mat-mdc-chip-option:hover mat-icon {
+      transform: scale(1.1);
     }
 
     .clear-filter-chip {
-      background: rgba(255, 255, 255, 0.2) !important;
-      font-weight: 500;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.18)) !important;
+      border: 1px solid rgba(255, 255, 255, 0.2) !important;
+      font-weight: 400 !important;
+      position: relative;
+    }
+
+    .clear-filter-chip::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 22px;
+      background: linear-gradient(135deg, transparent, rgba(255, 255, 255, 0.1));
+      pointer-events: none;
+    }
+
+    .clear-filter-chip:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.25)) !important;
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+
+    /* Dark Theme Adjustments */
+    [data-theme="dark"] .mat-mdc-chip-option {
+      border-color: rgba(255, 255, 255, 0.15);
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.85);
+    }
+
+    [data-theme="dark"] .mat-mdc-chip-option:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="dark"] .mat-mdc-chip-option[aria-selected="true"] {
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--bg-primary);
+      border-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 4px 20px rgba(255, 255, 255, 0.15);
+    }
+
+    [data-theme="dark"] .clear-filter-chip {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.18)) !important;
+      border-color: rgba(255, 255, 255, 0.25) !important;
+    }
+
+    [data-theme="dark"] .clear-filter-chip:hover {
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.28)) !important;
+      border-color: rgba(255, 255, 255, 0.4) !important;
     }
 
     .scroll-left, .scroll-right {
@@ -320,6 +418,18 @@ import { NewsCategory } from '../models/news.interface';
       .category-chips {
         padding: 0 4px;
       }
+
+      .mat-mdc-chip-option {
+        font-size: 12px;
+        padding: 8px 12px;
+        gap: 4px;
+      }
+
+      .mat-mdc-chip-option mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
     }
 
     @media (max-width: 480px) {
@@ -350,7 +460,20 @@ import { NewsCategory } from '../models/news.interface';
       }
 
       .category-chips mat-chip-listbox {
-        gap: 4px;
+        gap: 8px;
+      }
+
+      .mat-mdc-chip-option {
+        font-size: 11px;
+        padding: 6px 10px;
+        gap: 3px;
+        border-radius: 20px;
+      }
+
+      .mat-mdc-chip-option mat-icon {
+        font-size: 12px;
+        width: 12px;
+        height: 12px;
       }
 
       .scroll-left, .scroll-right {
@@ -372,7 +495,8 @@ export class HeaderComponent implements OnInit {
 
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
-    @Inject(DOCUMENT) private document: Document
+    @Inject(DOCUMENT) private document: Document,
+    private sanitizer: InputSanitizerService
   ) {}
 
   ngOnInit(): void {
@@ -396,22 +520,33 @@ export class HeaderComponent implements OnInit {
   }
 
   categories = [
-    { value: NewsCategory.POLITICS, label: 'Politics', icon: 'how_to_vote', color: '#e91e63' },
-    { value: NewsCategory.BUSINESS, label: 'Business', icon: 'business', color: '#2196f3' },
-    { value: NewsCategory.TECHNOLOGY, label: 'Tech', icon: 'computer', color: '#9c27b0' },
-    { value: NewsCategory.SPORTS, label: 'Sports', icon: 'sports_soccer', color: '#4caf50' },
-    { value: NewsCategory.ENTERTAINMENT, label: 'Entertainment', icon: 'movie', color: '#ff9800' },
-    { value: NewsCategory.SCIENCE, label: 'Science', icon: 'science', color: '#00bcd4' },
-    { value: NewsCategory.HEALTH, label: 'Health', icon: 'health_and_safety', color: '#8bc34a' },
-    { value: NewsCategory.WORLD, label: 'World', icon: 'public', color: '#607d8b' },
-    { value: NewsCategory.GERMANY, label: 'Germany', icon: 'flag', color: '#f44336' },
-    { value: NewsCategory.OPINION, label: 'Opinion', icon: 'comment', color: '#795548' }
+    { value: NewsCategory.POLITICS, label: 'Politics', icon: 'how_to_vote', color: '#8b5a5a' },
+    { value: NewsCategory.BUSINESS, label: 'Business', icon: 'business', color: '#5a6b8b' },
+    { value: NewsCategory.TECHNOLOGY, label: 'Tech', icon: 'computer', color: '#7a6b8b' },
+    { value: NewsCategory.SPORTS, label: 'Sports', icon: 'sports_soccer', color: '#6b8b5a' },
+    { value: NewsCategory.ENTERTAINMENT, label: 'Entertainment', icon: 'movie', color: '#8b6f5a' },
+    { value: NewsCategory.SCIENCE, label: 'Science', icon: 'science', color: '#5a8b7a' },
+    { value: NewsCategory.HEALTH, label: 'Health', icon: 'health_and_safety', color: '#7a8b5a' },
+    { value: NewsCategory.WORLD, label: 'World', icon: 'public', color: '#6b6b6b' },
+    { value: NewsCategory.GERMANY, label: 'Germany', icon: 'flag', color: '#8b5a6b' },
+    { value: NewsCategory.OPINION, label: 'Opinion', icon: 'comment', color: '#8b7a5a' }
   ];
 
   onSearch(): void {
     if (this.searchQuery.trim()) {
-      this.searchPerformed.emit(this.searchQuery.trim());
-      this.selectedCategory = null;
+      // Sanitize the search query to prevent XSS and injection attacks
+      const sanitizedQuery = this.sanitizer.sanitizeSearchQuery(this.searchQuery.trim());
+
+      if (sanitizedQuery) {
+        this.searchPerformed.emit(sanitizedQuery);
+        this.selectedCategory = null;
+
+        // Update the input field with the sanitized query
+        this.searchQuery = sanitizedQuery;
+      } else {
+        console.warn('🔒 Search query blocked due to potentially unsafe content');
+        this.searchQuery = '';
+      }
     }
   }
 

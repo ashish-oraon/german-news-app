@@ -33,7 +33,7 @@ import { RSSService } from '../services/rss.service';
           <span class="publish-time">{{ getTimeAgo() }}</span>
         </div>
         <div class="category-chip">
-          <mat-chip [style.background-color]="getCategoryColor()">
+          <mat-chip [style.background]="getCategoryGradient()">
             {{ article.category }}
           </mat-chip>
         </div>
@@ -193,10 +193,64 @@ import { RSSService } from '../services/rss.service';
 
     .category-chip {
       mat-chip {
-        font-size: 12px;
+        font-size: 11px;
         color: white;
-        font-weight: 500;
+        font-weight: 700;
+        border-radius: 16px;
+        padding: 4px 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
+        text-shadow:
+          0 1px 3px rgba(0, 0, 0, 0.8),
+          0 0 10px rgba(0, 0, 0, 0.5),
+          0 0 1px rgba(0, 0, 0, 1);
+        -webkit-text-stroke: 0.3px rgba(0, 0, 0, 0.3);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        border: 2px solid rgba(255, 255, 255, 0.25);
+        backdrop-filter: blur(4px);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
       }
+
+      mat-chip::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), transparent);
+        pointer-events: none;
+        border-radius: 14px;
+      }
+
+      mat-chip:hover {
+        transform: translateY(-1px) scale(1.05);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+        border-color: rgba(255, 255, 255, 0.4);
+      }
+
+      mat-chip:active {
+        transform: translateY(0) scale(0.98);
+      }
+
+      /* Ensure gradient overrides work properly */
+      mat-chip[style*="background"] {
+        border: 2px solid rgba(255, 255, 255, 0.3) !important;
+      }
+    }
+
+    /* Dark theme adjustments for category chips */
+    [data-theme="dark"] .category-chip mat-chip {
+      border-color: rgba(255, 255, 255, 0.15);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    [data-theme="dark"] .category-chip mat-chip:hover {
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+      border-color: rgba(255, 255, 255, 0.25);
     }
 
     .card-image {
@@ -530,6 +584,19 @@ import { RSSService } from '../services/rss.service';
         align-self: flex-end;
       }
 
+      .category-chip mat-chip {
+        font-size: 10px;
+        padding: 3px 8px;
+        border-radius: 12px;
+        letter-spacing: 0.6px;
+        font-weight: 800;
+        text-shadow:
+          0 1px 2px rgba(0, 0, 0, 0.9),
+          0 0 8px rgba(0, 0, 0, 0.6),
+          0 0 1px rgba(0, 0, 0, 1);
+        -webkit-text-stroke: 0.2px rgba(0, 0, 0, 0.4);
+      }
+
       .card-image {
         height: 160px;
       }
@@ -658,18 +725,34 @@ export class NewsCardComponent {
 
   getCategoryColor(): string {
     const colors: { [key: string]: string } = {
-      'Politik': '#e91e63',
-      'Wirtschaft': '#2196f3',
-      'Technologie': '#9c27b0',
-      'Sport': '#4caf50',
-      'Unterhaltung': '#ff9800',
-      'Wissenschaft': '#00bcd4',
-      'Gesundheit': '#8bc34a',
-      'Welt': '#607d8b',
-      'Deutschland': '#f44336',
-      'Meinung': '#795548'
+      'Politik': '#8b5a5a', // Muted burgundy
+      'Wirtschaft': '#5a6b8b', // Muted slate blue
+      'Technologie': '#7a6b8b', // Muted lavender
+      'Sport': '#6b8b5a', // Muted sage green
+      'Unterhaltung': '#8b6f5a', // Muted terracotta
+      'Wissenschaft': '#5a8b7a', // Muted seafoam
+      'Gesundheit': '#7a8b5a', // Muted olive
+      'Welt': '#6b6b6b', // Muted charcoal
+      'Deutschland': '#8b5a6b', // Muted dusty rose
+      'Meinung': '#8b7a5a' // Muted khaki
     };
-    return colors[this.article.category] || '#666';
+    return colors[this.article.category] || '#6b6b6b';
+  }
+
+  getCategoryGradient(): string {
+    const gradients: { [key: string]: string } = {
+      'Politik': 'linear-gradient(135deg, #a67c7c, #8b5a5a, #705050)',
+      'Wirtschaft': 'linear-gradient(135deg, #7c8ba6, #5a6b8b, #505570)',
+      'Technologie': 'linear-gradient(135deg, #9c8ba6, #7a6b8b, #655570)',
+      'Sport': 'linear-gradient(135deg, #8ba67c, #6b8b5a, #557050)',
+      'Unterhaltung': 'linear-gradient(135deg, #a6917c, #8b6f5a, #705950)',
+      'Wissenschaft': 'linear-gradient(135deg, #7ca696, #5a8b7a, #507065)',
+      'Gesundheit': 'linear-gradient(135deg, #96a67c, #7a8b5a, #657050)',
+      'Welt': 'linear-gradient(135deg, #878787, #6b6b6b, #555555)',
+      'Deutschland': 'linear-gradient(135deg, #a67c8b, #8b5a6b, #705055)',
+      'Meinung': 'linear-gradient(135deg, #a6967c, #8b7a5a, #706550)'
+    };
+    return gradients[this.article.category] || 'linear-gradient(135deg, #878787, #6b6b6b, #555555)';
   }
 
   getTimeAgo(): string {

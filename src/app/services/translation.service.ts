@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
+import { environment } from '../../environments/environment';
 
 export interface TranslationResponse {
   translatedText: string;
@@ -13,14 +14,12 @@ export interface TranslationResponse {
   providedIn: 'root'
 })
 export class TranslationService {
-  // CORS proxies for DeepL API (fallback chain)
+  // CORS proxies for DeepL API (fallback chain) - Only use reputable proxies
   private readonly DEEPL_CORS_PROXIES = [
-    'https://api.allorigins.win/get?url=',
-    'https://cors-anywhere.herokuapp.com/',
-    'https://thingproxy.freeboard.io/fetch/'
+    'https://api.allorigins.win/get?url='
   ];
-  private readonly DEEPL_API_URL = 'https://api-free.deepl.com/v2/translate';
-  private readonly DEEPL_API_KEY = '9953d415-eee9-40c8-9ff8-d2f17b63d5a4:fx';
+  private readonly DEEPL_API_URL = environment.deeplApiUrl;
+  private readonly DEEPL_API_KEY = environment.deeplApiKey;
   private currentProxyIndex = 0;
 
   // For Google Translate API (alternative)
@@ -33,7 +32,20 @@ export class TranslationService {
   private requestCount = 0;
   private lastRequestTime = 0;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    if (!this.isConfigured()) {
+      console.warn('⚠️ Translation service API keys not configured. Using fallback translations.');
+    }
+  }
+
+  /**
+   * Check if API keys are properly configured
+   */
+  isConfigured(): boolean {
+    return !!(this.DEEPL_API_KEY &&
+             this.DEEPL_API_KEY !== 'YOUR_DEEPL_API_KEY_HERE' &&
+             this.DEEPL_API_KEY.length > 0);
+  }
 
   /**
    * Translate text from German to English using DeepL API
@@ -340,13 +352,6 @@ export class TranslationService {
     return changedWords / originalWords.length;
   }
 
-  /**
-   * Check if API keys are configured
-   */
-  isConfigured(): boolean {
-    return !!(this.DEEPL_API_KEY) ||
-           !!(this.GOOGLE_API_KEY && this.GOOGLE_API_KEY !== '');
-  }
 
   /**
    * Get translation service status

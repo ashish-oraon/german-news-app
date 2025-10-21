@@ -26,5 +26,47 @@
         ]
       }
     }
+  ],
+  "dataGroups": [
+    {
+      "name": "rss-feeds",
+      "urls": [
+        "https://api.rss2json.com/**",
+        "https://*.rss2json.com/**"
+      ],
+      "cacheConfig": {
+        "strategy": "freshness",
+        "maxSize": 50,
+        "maxAge": "15m",
+        "timeout": "10s"
+      }
+    },
+    {
+      "name": "translation-api",
+      "urls": [
+        "https://api-free.deepl.com/**",
+        "https://api.mymemory.translated.net/**",
+        "https://api.allorigins.win/**"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 100,
+        "maxAge": "1h"
+      }
+    },
+    {
+      "name": "news-images",
+      "urls": [
+        "https://**/*.jpg",
+        "https://**/*.jpeg",
+        "https://**/*.png",
+        "https://**/*.webp"
+      ],
+      "cacheConfig": {
+        "strategy": "performance",
+        "maxSize": 200,
+        "maxAge": "1d"
+      }
+    }
   ]
 }

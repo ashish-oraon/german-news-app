@@ -1,11 +1,15 @@
 {
-  "name": "german-news-app",
-  "short_name": "german-news-app",
+  "name": "Deutsche News - German News in English",
+  "short_name": "Deutsche News",
+  "description": "Stay updated with latest German news translated to English. Read German headlines from top sources with instant translation.",
   "theme_color": "#1976d2",
   "background_color": "#fafafa",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "scope": "./",
   "start_url": "./",
+  "categories": ["news", "magazines"],
+  "lang": "en",
   "icons": [
     {
       "src": "icons/icon-72x72.png",

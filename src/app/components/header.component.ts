@@ -1,4 +1,4 @@
-import { Component, Output, EventEmitter, Inject, PLATFORM_ID } from '@angular/core';
+import { Component, Output, EventEmitter, Inject, PLATFORM_ID, OnInit } from '@angular/core';
 import { CommonModule, isPlatformBrowser, DOCUMENT } from '@angular/common';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatButtonModule } from '@angular/material/button';
@@ -111,10 +111,11 @@ import { NewsCategory } from '../models/news.interface';
       position: sticky;
       top: 0;
       z-index: 100;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2px 8px var(--shadow-color);
       flex-direction: column;
       align-items: stretch;
       padding: 0;
+      background-color: var(--bg-header) !important;
     }
 
     .toolbar-content {
@@ -142,12 +143,13 @@ import { NewsCategory } from '../models/news.interface';
       font-size: 24px;
       font-weight: 600;
       margin: 0;
-      color: white;
+      color: var(--text-on-primary);
     }
 
     .app-subtitle {
       font-size: 12px;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-on-primary);
+      opacity: 0.7;
       font-style: italic;
     }
 
@@ -161,7 +163,7 @@ import { NewsCategory } from '../models/news.interface';
       width: 100%;
 
       .mat-mdc-form-field-wrapper {
-        background: rgba(255, 255, 255, 0.1);
+        background: var(--overlay-color);
         border-radius: 24px;
       }
 
@@ -171,21 +173,24 @@ import { NewsCategory } from '../models/news.interface';
       }
 
       .mat-mdc-form-field-label {
-        color: rgba(255, 255, 255, 0.7) !important;
+        color: var(--text-on-primary) !important;
+        opacity: 0.7;
       }
 
       input {
-        color: white;
+        color: var(--text-on-primary);
       }
     }
 
     .search-icon {
       cursor: pointer;
-      color: rgba(255, 255, 255, 0.7);
+      color: var(--text-on-primary);
+      opacity: 0.7;
     }
 
     .search-icon:hover {
-      color: white;
+      color: var(--text-on-primary);
+      opacity: 1;
     }
 
     .actions-section {
@@ -196,7 +201,7 @@ import { NewsCategory } from '../models/news.interface';
       display: flex;
       align-items: center;
       padding: 8px 16px;
-      background: rgba(255, 255, 255, 0.1);
+      background: var(--overlay-color);
       position: relative;
       overflow: hidden;
     }
@@ -266,13 +271,20 @@ import { NewsCategory } from '../models/news.interface';
     }
 
     @media (max-width: 768px) {
+      .header-toolbar {
+        overflow-x: hidden;
+      }
+
       .toolbar-content {
         flex-wrap: wrap;
         padding: 8px;
+        max-width: 100vw;
+        overflow-x: hidden;
       }
 
       .brand-section {
         gap: 8px;
+        flex-shrink: 0;
       }
 
       .app-title {
@@ -290,12 +302,35 @@ import { NewsCategory } from '../models/news.interface';
         order: 3;
       }
 
+      .actions-section {
+        flex-shrink: 0;
+      }
+
       .category-nav {
-        padding: 8px;
+        padding: 8px 4px;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+
+      .category-nav::-webkit-scrollbar {
+        display: none;
+      }
+
+      .category-chips {
+        padding: 0 4px;
       }
     }
 
     @media (max-width: 480px) {
+      .toolbar-content {
+        padding: 4px;
+      }
+
+      .brand-section {
+        gap: 6px;
+      }
+
       .brand-section .app-icon {
         font-size: 24px;
         width: 24px;
@@ -305,10 +340,28 @@ import { NewsCategory } from '../models/news.interface';
       .app-title {
         font-size: 16px;
       }
+
+      .search-section {
+        margin: 6px 0 0 0;
+      }
+
+      .category-nav {
+        padding: 6px 2px;
+      }
+
+      .category-chips mat-chip-listbox {
+        gap: 4px;
+      }
+
+      .scroll-left, .scroll-right {
+        width: 32px;
+        height: 32px;
+        min-width: 32px;
+      }
     }
   `]
 })
-export class HeaderComponent {
+export class HeaderComponent implements OnInit {
   @Output() categorySelected = new EventEmitter<NewsCategory | null>();
   @Output() searchPerformed = new EventEmitter<string>();
   @Output() refreshRequested = new EventEmitter<void>();
@@ -321,6 +374,26 @@ export class HeaderComponent {
     @Inject(PLATFORM_ID) private platformId: Object,
     @Inject(DOCUMENT) private document: Document
   ) {}
+
+  ngOnInit(): void {
+    this.initializeTheme();
+  }
+
+  initializeTheme(): void {
+    if (isPlatformBrowser(this.platformId)) {
+      const savedTheme = localStorage.getItem('theme');
+      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+      this.isDarkMode = savedTheme === 'dark' || (!savedTheme && prefersDark);
+
+      const htmlElement = this.document.documentElement;
+      if (this.isDarkMode) {
+        htmlElement.setAttribute('data-theme', 'dark');
+      } else {
+        htmlElement.removeAttribute('data-theme');
+      }
+    }
+  }
 
   categories = [
     { value: NewsCategory.POLITICS, label: 'Politics', icon: 'how_to_vote', color: '#e91e63' },
@@ -374,8 +447,18 @@ export class HeaderComponent {
 
   toggleDarkMode(): void {
     this.isDarkMode = !this.isDarkMode;
-    // TODO: Implement dark mode toggle
-    console.log('Dark mode toggled:', this.isDarkMode);
+
+    if (isPlatformBrowser(this.platformId)) {
+      const htmlElement = this.document.documentElement;
+      if (this.isDarkMode) {
+        htmlElement.setAttribute('data-theme', 'dark');
+        localStorage.setItem('theme', 'dark');
+      } else {
+        htmlElement.removeAttribute('data-theme');
+        localStorage.setItem('theme', 'light');
+      }
+      console.log('Theme switched to:', this.isDarkMode ? 'dark' : 'light');
+    }
   }
 
   openAbout(): void {

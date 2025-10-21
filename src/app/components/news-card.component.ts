@@ -150,12 +150,13 @@ import { RSSService } from '../services/rss.service';
       position: relative;
       border-radius: 16px;
       overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 4px 12px var(--shadow-color);
       transition: all 0.3s ease;
+      background-color: var(--bg-card);
     }
 
     .news-card:hover {
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 24px var(--shadow-color);
       transform: translateY(-2px);
     }
 
@@ -182,12 +183,12 @@ import { RSSService } from '../services/rss.service';
     .source-name {
       font-weight: 500;
       font-size: 14px;
-      color: #666;
+      color: var(--text-secondary);
     }
 
     .publish-time {
       font-size: 12px;
-      color: #999;
+      color: var(--text-tertiary);
     }
 
     .category-chip {
@@ -224,7 +225,7 @@ import { RSSService } from '../services/rss.service';
       font-weight: 600;
       line-height: 1.4;
       margin: 0 0 12px 0;
-      color: #333;
+      color: var(--text-primary);
       position: relative;
       display: flex;
       align-items: center;
@@ -255,7 +256,7 @@ import { RSSService } from '../services/rss.service';
     .news-summary {
       font-size: 16px;
       line-height: 1.6;
-      color: #666;
+      color: var(--text-secondary);
       margin: 0 0 16px 0;
       display: -webkit-box;
       -webkit-line-clamp: 3;
@@ -430,22 +431,147 @@ import { RSSService } from '../services/rss.service';
       max-height: none;
     }
 
+    /* Tablet View */
     @media (max-width: 768px) {
       .news-card {
         margin: 8px;
         border-radius: 12px;
       }
 
+      .card-header {
+        padding: 12px 12px 8px 12px;
+      }
+
+      .card-content {
+        padding: 12px !important;
+      }
+
       .news-title {
         font-size: 18px;
+        line-height: 1.3;
       }
 
       .news-summary {
         font-size: 14px;
+        line-height: 1.5;
       }
 
       .card-image {
         height: 180px;
+      }
+
+      .card-actions {
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .card-actions button {
+        font-size: 12px;
+        padding: 6px 12px;
+        min-width: auto;
+      }
+
+      .translate-btn, .expand-btn, .source-btn {
+        flex: 1;
+        min-width: 80px;
+      }
+
+      .share-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+      }
+    }
+
+    /* Mobile View */
+    @media (max-width: 480px) {
+      .news-card {
+        margin: 4px 8px;
+        border-radius: 8px;
+      }
+
+      .card-header {
+        padding: 8px 8px 6px 8px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+      }
+
+      .card-content {
+        padding: 8px !important;
+      }
+
+      .news-title {
+        font-size: 16px;
+        margin: 0 0 8px 0;
+        line-height: 1.2;
+      }
+
+      .news-summary {
+        font-size: 13px;
+        margin: 0 0 10px 0;
+        line-height: 1.4;
+      }
+
+      .source-info {
+        flex: 1;
+        width: 100%;
+      }
+
+      .source-name {
+        font-size: 12px;
+      }
+
+      .publish-time {
+        font-size: 11px;
+      }
+
+      .category-chip {
+        align-self: flex-end;
+      }
+
+      .card-image {
+        height: 160px;
+      }
+
+      .card-actions {
+        gap: 6px;
+        margin-top: 8px;
+        flex-wrap: wrap;
+      }
+
+      .card-actions button {
+        font-size: 11px;
+        padding: 4px 8px;
+        flex: 1;
+        min-width: 0;
+      }
+
+      .translate-btn, .expand-btn, .source-btn {
+        min-width: 70px;
+      }
+
+      .share-btn {
+        width: 36px;
+        height: 36px;
+        min-width: 36px;
+        flex: none;
+      }
+
+      .reading-info {
+        position: static;
+        margin-top: 8px;
+        align-self: flex-start;
+        font-size: 11px;
+        padding: 3px 6px;
+      }
+
+      .translation-status {
+        margin: 8px 0;
+      }
+
+      .translation-status-text {
+        font-size: 11px;
       }
     }
   `]

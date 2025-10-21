@@ -61,8 +61,9 @@ import { RSSService } from '../services/rss.service';
   styles: [`
     .api-status-card {
       margin-bottom: 1rem;
-      background: linear-gradient(135deg, #e8f5e8 0%, #f0f9f0 100%);
-      border-left: 4px solid #4caf50;
+      background: var(--bg-card);
+      border-left: 4px solid var(--accent-color);
+      box-shadow: 0 2px 8px var(--shadow-color);
     }
 
     .status-row {
@@ -89,6 +90,7 @@ import { RSSService } from '../services/rss.service';
     .status-text {
       flex: 1;
       font-size: 14px;
+      color: var(--text-primary);
     }
 
     .status-chip {
@@ -104,7 +106,7 @@ import { RSSService } from '../services/rss.service';
 
     .cache-age {
       font-size: 12px;
-      color: #666;
+      color: var(--text-secondary);
       font-style: italic;
     }
 

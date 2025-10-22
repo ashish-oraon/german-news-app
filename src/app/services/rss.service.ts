@@ -104,6 +104,32 @@ export class RSSService {
       },
       category: NewsCategory.TECHNOLOGY,
       proxy: true
+    },
+    {
+      url: '', // Will be built dynamically with API key
+      rssUrl: 'https://themunicheye.com/sitemap.rss',
+      source: {
+        id: 'munich-eye',
+        name: 'The Munich Eye',
+        url: 'https://themunicheye.com',
+        logoUrl: 'assets/icons/news-placeholder.svg',
+        reliability: 4
+      },
+      category: NewsCategory.WORLD,
+      proxy: true
+    },
+    {
+      url: '', // Will be built dynamically with API key
+      rssUrl: 'https://munichnow.com/feed/',
+      source: {
+        id: 'munich-now',
+        name: 'MunichNOW',
+        url: 'https://munichnow.com',
+        logoUrl: 'assets/icons/news-placeholder.svg',
+        reliability: 3
+      },
+      category: NewsCategory.WORLD,
+      proxy: true
     }
   ];
 
@@ -578,7 +604,18 @@ export class RSSService {
   private translateSingleArticle(article: NewsArticle): Observable<NewsArticle> {
     console.log(`🔄 Translating: "${article.title.substring(0, 50)}..."`);
 
-    // Translate title and content in parallel
+    // Skip translation for English sources (Munich Eye and MunichNOW)
+    if (article.source.id === 'munich-eye' || article.source.id === 'munich-now') {
+      console.log(`ℹ️ Skipping translation for English source: ${article.source.name}`);
+      return of({
+        ...article,
+        titleTranslated: article.title, // Use original English title
+        contentTranslated: article.content, // Use original English content
+        summary: this.generateEnglishSummary(article.content)
+      });
+    }
+
+    // Translate title and content in parallel for German sources
     const titleTranslation$ = this.translationService.translateToEnglish(article.title);
     const contentTranslation$ = this.translationService.translateToEnglish(
       article.content.length > 300 ? article.content.substring(0, 300) + '...' : article.content
@@ -718,6 +755,22 @@ export class RSSService {
         contentTranslated: 'In a dramatic semi-final, Bayern Munich prevailed 3:2 and reached the Champions League final.',
         summary: 'Bayern Munich secures Champions League final spot with dramatic 3:2 victory in thrilling match.',
         category: NewsCategory.SPORTS
+      },
+      {
+        title: 'Munich International School Opens New Campus',
+        titleTranslated: 'Munich International School Opens New Campus', // Already in English
+        content: 'Munich International School has opened its new state-of-the-art campus in the heart of the city, featuring modern facilities and expanded programs for international students.',
+        contentTranslated: 'Munich International School has opened its new state-of-the-art campus in the heart of the city, featuring modern facilities and expanded programs for international students.',
+        summary: 'Munich International School unveils new campus with advanced facilities for international education.',
+        category: NewsCategory.WORLD
+      },
+      {
+        title: 'Oktoberfest 2024 Breaks Attendance Records',
+        titleTranslated: 'Oktoberfest 2024 Breaks Attendance Records', // Already in English
+        content: 'This year\'s Oktoberfest has set new attendance records with over 7 million visitors from around the world celebrating Bavarian culture and traditions in Munich.',
+        contentTranslated: 'This year\'s Oktoberfest has set new attendance records with over 7 million visitors from around the world celebrating Bavarian culture and traditions in Munich.',
+        summary: 'Oktoberfest 2024 achieves record-breaking attendance with 7 million international visitors.',
+        category: NewsCategory.WORLD
       }
     ];
 

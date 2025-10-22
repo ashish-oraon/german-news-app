@@ -66,3 +66,4 @@ if (fs.existsSync(envPath)) {
   console.error('❌ Failed to create environment file');
   process.exit(1);
 }
+
